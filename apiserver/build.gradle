@@ -1,0 +1,23 @@
+apply plugin: 'java'
+apply plugin: "org.springframework.boot"
+
+sourceCompatibility = 1.5
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile "junit:junit:4.11"
+    testCompile "org.springframework.boot:spring-boot-starter-test:${springBootStarterVersion}"
+
+    compile "org.springframework.boot:spring-boot-starter-web:${springBootStarterVersion}"
+    compile "org.springframework.boot:spring-boot-starter-actuator:${springBootStarterVersion}"
+}
+
+bootRun {
+    jvmArgs "-XX:MaxPermSize=480m"
+
+    systemProperty "spring.profiles.active", "dev"
+    systemProperty "server.port", 8080
+}
