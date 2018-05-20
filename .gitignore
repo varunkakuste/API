@@ -10,3 +10,4 @@ target/
 *.log
 */bin/
 */out/
+node_modules/
