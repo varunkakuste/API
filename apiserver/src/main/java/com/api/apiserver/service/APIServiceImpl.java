@@ -1,13 +1,9 @@
 package com.api.apiserver.service;
 
-import com.api.apiserver.model.Account;
-import com.api.apiserver.model.AccountData;
 import com.api.apiserver.model.Marker;
 import com.api.apiserver.model.MarkerData;
-import com.api.apiserver.model.OAuthToken;
-import com.api.apiserver.model.Profile;
-import com.api.apiserver.model.ProfileData;
-import com.sun.xml.internal.bind.v2.TODO;
+import com.api.apiserver.model.Score;
+import com.api.apiserver.model.Variant;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResourceLoader;
@@ -18,8 +14,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -29,42 +25,49 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by Varun Kakuste on 5/22/18.
+ * @author Varun Kakuste.
  */
 @Component
 public class APIServiceImpl implements APIService  {
 
   public static final String BASE_URL = "https://api.23andme.com";
 
-  private final Set<String> NEANDERTHAL_VARIANTS;
   private final RestTemplate restTemplate;
-
+  private static Set<String> neanderthalVariants;
+  private static Set<String> accessionIds;
 
   @Autowired
   public APIServiceImpl(RestTemplate restTemplate) {
-    this.NEANDERTHAL_VARIANTS = loadNeanderthalVariants();
+    loadNeanderthalVariants();
     this.restTemplate = restTemplate;
   }
 
-  private Set<String> loadNeanderthalVariants() {
+  private void loadNeanderthalVariants() {
+    neanderthalVariants = new HashSet<String>();
+    accessionIds = new HashSet<String>();
     ResourceLoader resourceLoader = new FileSystemResourceLoader();
     Resource resource =
         resourceLoader.getResource("classpath:" + "/files/neanderthal_variants.txt");
     InputStream fileStream = null;
     BufferedReader br = null;
-    Set<String> result = new HashSet<String>();
     try {
       fileStream = resource.getInputStream();
       br = new BufferedReader(new InputStreamReader(fileStream));
       String strLine;
-      while ((strLine = br.readLine()) != null)   {
-        result.add(strLine);
+      while ((strLine = br.readLine()) != null) {
+        neanderthalVariants.add(strLine);
+        accessionIds.add(strLine.split(":")[0]);
       }
     } catch (Exception e) {
+      System.out.println("Problem loading variants and accession_ids");
     } finally {
       try {
         fileStream.close();
@@ -73,95 +76,78 @@ public class APIServiceImpl implements APIService  {
         e.printStackTrace();
       }
     }
-    return result;
+    System.out.println("LOADED");
   }
 
-  @Override
-  public OAuthToken generateOAuthToken(String code) throws Exception {
-    OAuthToken result = null;
 
-    MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
-    map.add("client_id", "");
-    map.add("client_secret", "");
-    map.add("grant_type", "authorization_code");
-    map.add("code", code);
-    map.add("redirect_uri", "http://localhost:8080");
-    map.add("scope", "basic rs3094315 names email");
-
-    try {
-      HttpEntity entity = new HttpEntity<MultiValueMap<String, String>>(map, new HttpHeaders());
-      URI uri = getUri("/token/");
-      ResponseEntity<OAuthToken> response =
-          restTemplate.exchange(uri, HttpMethod.POST, entity, OAuthToken.class);
-      result = response.getBody();
-    } catch (HttpClientErrorException exp) {
-      throw new Exception("Exception while generating a token: " + exp.getResponseBodyAsString());
+  public Set<Score> calculateScore() throws Exception {
+    Map<String, List<Variant>> neanderthalVariantsOfMarker = new HashMap<String, List<Variant>>();
+    for (String accessionId: accessionIds) {
+      // get markers by accessionId
+      Set<Marker> markers = getMarkersByAccessionId(accessionId);
+      getVariantsAssociatedWithMarker(neanderthalVariantsOfMarker, markers);
     }
-    return result;
+    // calculate score
+    Set<Score> scores = getScores(neanderthalVariantsOfMarker);
+    return scores;
   }
 
-
-
-
-
-
-  @Override
-  public Account getAccount(OAuthToken oAuthToken) throws Exception {
-    Account result = null;
-    try {
-      HttpEntity entity = new HttpEntity<MultiValueMap>(getHeaders(oAuthToken));
-      URI uri = getUri("/3/account/");
-      ResponseEntity<AccountData> response =
-          restTemplate.exchange(uri, HttpMethod.GET, entity, AccountData.class);
-      AccountData accountData = response.getBody();
-      if (accountData != null &&
-          accountData.getData() != null &&
-          !accountData.getData().isEmpty()) {
-        result = accountData.getData().get(0);
+  private void getVariantsAssociatedWithMarker(
+      Map<String, List<Variant>> neanderthalVariantsOfMarker, Set<Marker> markers) {
+    if (markers != null && !markers.isEmpty()) {
+      //iterate over markers and look for neanderthal variants
+      for (Marker marker: markers) {
+        List<Variant> variants = marker.getVariants();
+        if (variants != null && !variants.isEmpty()) {
+          // iterate over marker variants and check if it has neanderthal variant from text file
+          // if so, add it to the neanderthalVariantsOfMarker
+          for (Variant variant: variants) {
+            if (neanderthalVariants.contains(variant.getVariantAsAString())) {
+              if (neanderthalVariantsOfMarker.containsKey(marker.getId())) {
+                neanderthalVariantsOfMarker.get(marker.getId()).add(variant);
+              } else {
+                List<Variant> variantList = new ArrayList<Variant>();
+                variantList.add(variant);
+                neanderthalVariantsOfMarker.put(marker.getId(), variantList);
+              }
+            }
+          }
+        }
       }
-    } catch (HttpClientErrorException exp) {
-      throw new Exception("Exception fetching Account details: " + exp.getResponseBodyAsString());
     }
-    return result;
   }
 
-
-
-
-
-  @Override
-  public Profile getProfile(OAuthToken oAuthToken, String profileId) throws Exception {
-    Profile result = null;
-    try {
-      HttpEntity entity = new HttpEntity<MultiValueMap>(getHeaders(oAuthToken));
-      URI uri = getUri("/3/profile/" + profileId);
-      ResponseEntity<ProfileData> response =
-          restTemplate.exchange(uri, HttpMethod.GET, entity, ProfileData.class);
-      ProfileData profileData = response.getBody();
-      if (profileData != null &&
-          profileData.getData() != null &&
-          !profileData.getData().isEmpty()) {
-        result = profileData.getData().get(0);
+  // We don't really require this method if we calculate score in
+  // getVariantsAssociatedWithMarker() method but I want it to isolate it for now
+  // just in case we have to make any other changes or require more information later
+  private Set<Score> getScores(Map<String, List<Variant>> neanderthalVariantsOfMarker) {
+    Set<Score> scores = new HashSet<Score>();
+    Score score = null;
+    if (neanderthalVariantsOfMarker != null && !neanderthalVariantsOfMarker.isEmpty()) {
+      for (String marker: neanderthalVariantsOfMarker.keySet()) {
+        List<Variant> variants = neanderthalVariantsOfMarker.get(marker);
+        score = new Score();
+        score.setMarker(marker);
+        score.setNumberOfVariants(variants.size());
+        Double dosage = 0.0;
+        for (Variant variant: variants) {
+          score.addVariant(variant.getVariantAsAString());
+          if (variant.getDosage() != null) {
+            dosage += variant.getDosage();
+          }
+        }
+        score.setTotalDosage(dosage);
+        scores.add(score);
       }
-    } catch (HttpClientErrorException exp) {
-      throw new Exception("Exception fetching Profile details: " + exp.getResponseBodyAsString());
     }
-    return result;
+    return scores;
   }
 
-
-
-
-
-
-
-  // TODO(varun): This doesn't work unless we pass accession_id/start/end in the query params
-  @Override
-  public Set<Marker> getMarkers(OAuthToken oAuthToken, String profileId) throws Exception {
+  public Set<Marker> getMarkersByAccessionId(String accessionId) throws Exception {
     Set<Marker> result = null;
     try {
-      HttpEntity entity = new HttpEntity<MultiValueMap>(getHeaders(oAuthToken));
-      URI uri = getUri("/3/profile/" + profileId + "/marker/");
+      HttpEntity entity = new HttpEntity<MultiValueMap>(getDemoHeaders());
+      URI uri = getUri("/3/profile/demo_profile_id/marker/", accessionId);
       ResponseEntity<MarkerData> response =
           restTemplate.exchange(uri, HttpMethod.GET, entity, MarkerData.class);
       MarkerData markerData = response.getBody();
@@ -176,23 +162,19 @@ public class APIServiceImpl implements APIService  {
     return result;
   }
 
+  private HttpHeaders getDemoHeaders() {
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Authorization", "Bearer demo_oauth_token");
+    return headers;
+  }
 
-
-
-
-
-
-
-
-
-  private URI getUri(String path) {
+  private URI getUri(String path, String accessionId) {
     UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(BASE_URL + path);
+    if (!StringUtils.isEmpty(accessionId)) {
+      // we can accept Map for query parameters instead of accessionId
+      builder.queryParam("accession_id", accessionId);
+    }
     return builder.build().encode().toUri();
   }
 
-  private HttpHeaders getHeaders(OAuthToken oAuthToken) {
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", "Bearer " + oAuthToken.getAccessToken());
-    return headers;
-  }
 }

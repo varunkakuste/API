@@ -1,5 +1,6 @@
 package com.api.apiserver.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
@@ -13,9 +14,10 @@ public class Variant {
   private String accessionId;
   private Integer start;
   private Integer end;
-  private Character allele;
-  private Float dosage;
+  private String allele;
+  private Double dosage;
 
+  @JsonIgnore
   public String getVariantAsAString() {
     StringBuilder builder = new StringBuilder();
     builder.append(this.accessionId)

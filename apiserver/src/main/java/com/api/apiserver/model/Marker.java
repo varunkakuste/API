@@ -1,6 +1,6 @@
 package com.api.apiserver.model;
 
-import java.util.Set;
+import java.util.List;
 
 import lombok.Data;
 
@@ -10,5 +10,5 @@ import lombok.Data;
 @Data
 public class Marker {
   private String id;
-  private Set<Variant> variants;
+  private List<Variant> variants;
 }
