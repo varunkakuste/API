@@ -37,10 +37,14 @@ ng serve
 
 Now, hit http://localhost:4200 in the browser and follow the instructions
 
+#### Note
+- When we click the `Get Marker Details` button, it takes 15-25 seconds to read and display details.
+
 ### Understanding and Assumptions
 
 - `neanderthal_variants.txt` has the unique neanderthal DNA samples
 - A marker may have or may not have neanderthal variant. In addition to the neanderthal variant, it will have it's own variants too
+- I didn't have multiple profile's for testing so, I have used `demo` profile but the HTML form accepts ProfileId and Access Token, as long as input is right it will fetch the data and display else it will fetch data for `demo_profile_id` using `demo_oauth_token`
   
 ### Coding 
 
