@@ -23,6 +23,7 @@ cd to the cloned directory
 ./gradlew clean apiserver:build
 ./gradlew clean apiserver:bootrun
 ```
+Now, the server is running at http://localhost:8080/
 
 ### Start the apiportal
 
@@ -35,7 +36,7 @@ npm install
 ng serve
 ```
 
-Now, hit http://localhost:8080/ in the browser and follow the instructions
+Now, hit http://localhost:4200 in the browser and follow the instructions
 
 ### Understanding and Assumptions
 
