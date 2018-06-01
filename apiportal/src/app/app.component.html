@@ -1,0 +1,37 @@
+<!--The content below is only a placeholder and can be replaced.-->
+<div style="text-align:center">
+  <h1>
+    {{title}}!
+  </h1>
+</div>
+<h2>Here are some links to help you start: </h2>
+
+<form (ngSubmit)="getNeanderthalScore()">
+  <input [(ngModel)]="profileId" placeholder="profile id" type="text" name="profileId" size="50">
+  <input [(ngModel)]="token" placeholder="access token" type="text" name="token" size="50">
+
+  <button type="submit" class="button">Get Marker Details</button>
+</form>
+
+<div><h4>&nbsp;</h4></div>
+
+<table *ngIf="markerScores?.length > 0">
+  <tbody>
+  <tr>
+    <th>Marker</th>
+    <th>Total Dosage</th>
+    <th>Number Of Variants</th>
+    <th>Matched Unique Neanderthal Variants</th>
+  </tr>
+  <tr *ngFor="let score of markerScores">
+    <td>{{score.marker}}</td>
+    <td>{{score.totalDosage}}</td>
+    <td>{{score.numberOfVariants}}</td>
+    <td>{{score.variants}}</td>
+  </tr>
+  </tbody>
+</table>
+
+<div *ngIf="error" style="text-align:center">
+  <h3 style="color:red;">{{error}}</h3>
+</div>

@@ -28,9 +28,11 @@ public class ApiController {
     this.apiService = apiService;
   }
 
-  @RequestMapping(value = "/", method = RequestMethod.GET)
-  public ResponseEntity<Set<Score>> variantScore() throws Exception {
-    Set<Score> scores = apiService.calculateScore();
+  @RequestMapping(value = "/marker-details", method = RequestMethod.GET)
+  public ResponseEntity<Set<Score>> getMarkerDetails(@RequestParam("profileId") String profileId,
+                                                     @RequestParam("token") String token)
+      throws Exception {
+    Set<Score> scores = apiService.calculateScore(profileId, token);
     return new ResponseEntity(scores, HttpStatus.OK);
   }
 

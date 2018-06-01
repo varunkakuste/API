@@ -9,6 +9,7 @@ import java.util.Set;
  * @author Varun Kakuste.
  */
 public interface APIService {
-  Set<Score> calculateScore() throws Exception;
-  Set<Marker> getMarkersByAccessionId(String accessionId) throws Exception;
+  Set<Score> calculateScore(String profileId, String token) throws Exception;
+  Set<Marker> getMarkersByAccessionId(String accessionId, String profileId, String token)
+      throws Exception;
 }

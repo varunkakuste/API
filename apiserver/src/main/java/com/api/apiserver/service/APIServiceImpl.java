@@ -80,11 +80,19 @@ public class APIServiceImpl implements APIService  {
   }
 
 
-  public Set<Score> calculateScore() throws Exception {
+  public Set<Score> calculateScore(String profileId, String token) throws Exception {
+    if (StringUtils.isEmpty(profileId)) {
+      profileId = "demo_profile_id";
+    }
+
+    if (StringUtils.isEmpty(token)) {
+      token = "demo_oauth_token";
+    }
+
     Map<String, List<Variant>> neanderthalVariantsOfMarker = new HashMap<String, List<Variant>>();
     for (String accessionId: accessionIds) {
       // get markers by accessionId
-      Set<Marker> markers = getMarkersByAccessionId(accessionId);
+      Set<Marker> markers = getMarkersByAccessionId(accessionId, profileId, token);
       getVariantsAssociatedWithMarker(neanderthalVariantsOfMarker, markers);
     }
     // calculate score
@@ -143,11 +151,12 @@ public class APIServiceImpl implements APIService  {
     return scores;
   }
 
-  public Set<Marker> getMarkersByAccessionId(String accessionId) throws Exception {
+  public Set<Marker> getMarkersByAccessionId(String accessionId, String profileId, String token)
+      throws Exception {
     Set<Marker> result = null;
     try {
-      HttpEntity entity = new HttpEntity<MultiValueMap>(getDemoHeaders());
-      URI uri = getUri("/3/profile/demo_profile_id/marker/", accessionId);
+      HttpEntity entity = new HttpEntity<MultiValueMap>(getDemoHeaders(token));
+      URI uri = getUri("/3/profile/" + profileId + "/marker/", accessionId);
       ResponseEntity<MarkerData> response =
           restTemplate.exchange(uri, HttpMethod.GET, entity, MarkerData.class);
       MarkerData markerData = response.getBody();
@@ -162,9 +171,9 @@ public class APIServiceImpl implements APIService  {
     return result;
   }
 
-  private HttpHeaders getDemoHeaders() {
+  private HttpHeaders getDemoHeaders(String token) {
     HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", "Bearer demo_oauth_token");
+    headers.set("Authorization", "Bearer " + token);
     return headers;
   }
 
