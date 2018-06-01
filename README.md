@@ -2,20 +2,13 @@
 
 ## Requirements
 
+- Gradle 2.14
 - node v6.9.5
 - npm version 3.10.10
 - angular/cli: 1.3.2 (make sure using ng --version)
 - java version 1.8.0_91
 - Lombok plugin
 - IntelliJ Idea
-
-### Import lombok plugin
-
-We are using Lombok project which can automatically generates getters, setters, equals, hashCode and more.For more information, go to `https://projectlombok.org/index.html`.
-
-To avoid having error in your Intellij project, you should import the Lombok plugin:
-
-<kbd>Preferences</kbd> > <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>Browse repositories...</kbd> > <kbd>Search for "lombok"</kbd> > <kbd>Install Plugin</kbd>
 
 ## How to start all services
 
@@ -56,3 +49,16 @@ Now, hit http://localhost:8080/ in the browser and follow the instructions
 - Now, we will have marker and it's variants, iterate over each marker and check if it's variants are present in `neanderthal_variants.txt`. 
 If so, get the `dosage` and store it
 - In the end, add all the `dosage` of the marker's variant matched with the neanderthal's variant and display it on the browser
+
+## Open Project in IntelliJ Idea
+- Open IntelliJ Idea
+- Select open and navigate to the cloned project directory and open it
+- Follow the instructions, make sure to select correct gradle and java while opening the project
+
+## Import lombok plugin
+
+We are using Lombok project which can automatically generates getters, setters, equals, hashCode and more.For more information, go to `https://projectlombok.org/index.html`.
+
+To avoid having error in your Intellij project, you should import the Lombok plugin:
+
+<kbd>Preferences</kbd> > <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>Browse repositories...</kbd> > <kbd>Search for "lombok"</kbd> > <kbd>Install Plugin</kbd>
