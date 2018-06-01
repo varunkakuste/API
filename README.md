@@ -16,7 +16,6 @@
 
 This service manages the API server, to expose API to end user
 
-- cd to the cloned directory and then 
 ```bash
 cd to the cloned directory
 ./gradlew clean apiserver:assemble --refresh-dependencies
